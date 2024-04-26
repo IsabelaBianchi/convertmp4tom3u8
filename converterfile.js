@@ -6,9 +6,7 @@ const FormData = require('form-data');
 const path = require('path');
 const videoQualities = [
   { resolution: '1280x720', bitrate: '2149280', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.64001f', name: '720' },
-  { resolution: '320x184', bitrate: '246440', audioCodec: 'mp4a.40.5', videoCodec: 'avc1.42000d', name: '240' },
   { resolution: '512x288', bitrate: '460560', audioCodec: 'mp4a.40.5', videoCodec: 'avc1.420016', name: '380' },
-  { resolution: '848x480', bitrate: '836280', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.64001f', name: '480' },
   { resolution: '1920x1080', bitrate: '6221600', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.640028', name: '1080' }
 ];
 // Definir o caminho para o ffmpeg
@@ -18,9 +16,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 async function converterMP4paraM3U8(inputFile, outputFile) {
   const videoQualities = [
     { resolution: '1280x720', bitrate: '2149280', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.64001f', name: '720' },
-    { resolution: '320x184', bitrate: '246440', audioCodec: 'mp4a.40.5', videoCodec: 'avc1.42000d', name: '240' },
     { resolution: '512x288', bitrate: '460560', audioCodec: 'mp4a.40.5', videoCodec: 'avc1.420016', name: '380' },
-    { resolution: '848x480', bitrate: '836280', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.64001f', name: '480' },
     { resolution: '1920x1080', bitrate: '6221600', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.640028', name: '1080' }
   ];
 
@@ -32,7 +28,6 @@ async function converterMP4paraM3U8(inputFile, outputFile) {
         .videoCodec('libx264')
         .audioCodec('aac')
         .outputOptions([
-          `-vf scale=${quality.resolution}`,
           `-b:v ${quality.bitrate}`,
           '-hls_time 5',
           '-hls_playlist_type vod'
@@ -99,13 +94,13 @@ async function enviarArquivosParaURL(pasta, url) {
   }
 }
 
-const outputDirectory = './output';
+const outputDirectory = './out';
 
 // Converter MP4 para M3U8
 async function converterArquivoFile(inputFile, outputFileName, repositoryUrl) {
   try {
 
-    const outputFileCompletePath = 'output/' + outputFileName + '.m3u8'; // Adicione a extensão corretamente
+    const outputFileCompletePath = 'out/' + outputFileName + '.m3u8'; // Adicione a extensão corretamente
 
     await converterMP4paraM3U8(inputFile, outputFileCompletePath);
 
