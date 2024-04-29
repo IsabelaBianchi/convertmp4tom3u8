@@ -5,19 +5,19 @@ const fs = require('fs');
 const FormData = require('form-data');
 const path = require('path');
 const videoQualities = [
-  { resolution: '1280x720', bitrate: '2149280', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.64001f', name: '720' },
-  { resolution: '512x288', bitrate: '460560', audioCodec: 'mp4a.40.5', videoCodec: 'avc1.420016', name: '380' },
-  { resolution: '1920x1080', bitrate: '6221600', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.640028', name: '1080' }
+  { bitrate: '2149280', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.64001f', name: '720' },
+  { bitrate: '460560', audioCodec: 'mp4a.40.5', videoCodec: 'avc1.420016', name: '380' },
+  { bitrate: '6221600', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.640028', name: '1080' }
 ];
 // Definir o caminho para o ffmpeg
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 // Função para converter MP4 para M3U8
-async function converterMP4paraM3U8(inputFile, outputFile) {
+async function converterMP4paraM3U8(inputFile, outputFile, videoUrl) {
   const videoQualities = [
-    { resolution: '1280x720', bitrate: '2149280', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.64001f', name: '720' },
-    { resolution: '512x288', bitrate: '460560', audioCodec: 'mp4a.40.5', videoCodec: 'avc1.420016', name: '380' },
-    { resolution: '1920x1080', bitrate: '6221600', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.640028', name: '1080' }
+    { bitrate: '2149280', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.64001f', name: '720' },
+    { bitrate: '460560', audioCodec: 'mp4a.40.5', videoCodec: 'avc1.420016', name: '380' },
+    { bitrate: '6221600', audioCodec: 'mp4a.40.2', videoCodec: 'avc1.640028', name: '1080' }
   ];
 
   const promises = videoQualities.map((quality, index) => {
@@ -41,8 +41,8 @@ async function converterMP4paraM3U8(inputFile, outputFile) {
 
   try {
     await Promise.all(promises);
-    const playlist = promises.map((_, index) => `#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=${videoQualities[index].bitrate},CODECS="${videoQualities[index].audioCodec},${videoQualities[index].videoCodec}",RESOLUTION=${videoQualities[index].resolution},NAME="${videoQualities[index].name}" ${outputFile}_${videoQualities[index].name}.m3u8`).join('\n');
-    const m3u8Content = `#EXTM3U\n${playlist}`;
+    const playlistEntries = videoQualities.map((quality, index) => `#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=${quality.bitrate},CODECS="${quality.audioCodec},${quality.videoCodec}",RESOLUTION=${quality.resolution},NAME="${quality.name}"\n${videoUrl}${outputFile}_${quality.name}.m3u8`);
+    const m3u8Content = `#EXTM3U\n${playlistEntries.join('\n')}`;
     const m3u8File = `${outputFile}_playlist.m3u8`;
     require('fs').writeFileSync(m3u8File, m3u8Content);
     console.log(`Arquivo m3u8 gerado em: ${m3u8File}`);
@@ -97,12 +97,12 @@ async function enviarArquivosParaURL(pasta, url) {
 const outputDirectory = './out';
 
 // Converter MP4 para M3U8
-async function converterArquivoFile(inputFile, outputFileName, repositoryUrl) {
+async function converterArquivoFile(inputFile, outputFileName, repositoryUrl, videoUrl) {
   try {
 
     const outputFileCompletePath = 'out/' + outputFileName + '.m3u8'; // Adicione a extensão corretamente
 
-    await converterMP4paraM3U8(inputFile, outputFileCompletePath);
+    await converterMP4paraM3U8(inputFile, outputFileCompletePath, videoUrl);
 
     const urls = await enviarArquivosParaURL(outputDirectory, repositoryUrl); // Corrija o nome da variável
     return urls;
@@ -118,12 +118,14 @@ async function converterfile(req, res) {
 
     const inputFile = req.file;
     const repositoryUrl = req.body.repositoryUrl;
+    const videoUrl = req.body.videoUrl;
 
     console.log('repository url '+repositoryUrl);
     const urls = await converterArquivoFile(
       inputFile.path,
       outputFileName,
-      repositoryUrl
+      repositoryUrl,
+      videoUrl
     );
 
     res.send(urls);
